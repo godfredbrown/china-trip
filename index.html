@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0f12">
+<title>China Sourcing Trip</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0f12;--s1:#161920;--s2:#1c2028;--bd:#252a35;--t1:#e8e6e3;--t2:#8b8d94;--t3:#55575e;--ok:#5DC77A}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t1);min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit}
+::-webkit-scrollbar{display:none}
+input::placeholder{color:var(--t3)}
+.app{max-width:480px;margin:0 auto;padding-bottom:80px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;background:var(--s2);border:1px solid var(--bd);color:var(--ok);z-index:300;white-space:nowrap;animation:fadeUp .3s ease;pointer-events:none}
+@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(212,168,67,.4)}50%{box-shadow:0 0 0 8px rgba(212,168,67,0)}}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:rgba(22,25,32,.92);border-top:1px solid var(--bd);display:flex;justify-content:center;padding:8px 0;padding-bottom:max(8px,env(safe-area-inset-bottom));z-index:50;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.bnav-in{display:flex;gap:4px;max-width:480px;width:100%;padding:0 12px}
+.nbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 4px;border-radius:10px;font-size:10px;font-weight:600;color:var(--t3);transition:all .2s}
+.nbtn .ni{font-size:18px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:flex;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.panel{max-width:480px;width:100%;background:var(--bg);border-radius:20px 20px 0 0;max-height:85vh;display:flex;flex-direction:column;border:1px solid var(--bd);border-bottom:none}
+.panel-hdr{padding:16px 20px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+.panel-body{flex:1;overflow-y:auto;padding:16px}
+.fullimg{position:fixed;inset:0;z-index:250;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:20px;cursor:pointer}
+.fullimg img{max-width:100%;max-height:80vh;border-radius:12px}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+<script>
+// ==================== DATA ====================
+const D={
+shenzhen1:{id:"shenzhen1",name:"Shenzhen",dates:"Apr 6-7",sub:"Electronics",color:"#E8A838",bg:"#2a2210",icon:"\uD83D\uDD0C",hotel:"Ruiya Hotel Style Apartment",hotelCn:"\u5E7F\u4E1C\u6DF1\u5733\u798F\u7530\u533A\u677E\u5CAD\u8DEF6\u53F7\u6770\u6069\u5927\u53A6\u4E00\u697C",focus:"Electronics, Phones, Power Banks",note:"",
+markets:[{name:"SEG Electronics (4F)",cn:"\u8D5B\u683C\u7535\u5B50\u5E02\u573A",focus:"Components, power banks",stars:3,img:"https://images.unsplash.com/photo-1555664424-778a1e5e1b48?w=400&h=200&fit=crop"},{name:"Longsheng Accessories",cn:"\u9F99\u80DC\u914D\u4EF6\u57CE",focus:"Phone accessories",stars:2,img:"https://images.unsplash.com/photo-1556656793-08538906a9f8?w=400&h=200&fit=crop"},{name:"Yuanwang Digital Mall",cn:"\u8FDC\u671B\u6570\u7801\u57CE",focus:"New phones, digital",stars:2,img:"https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=400&h=200&fit=crop"},{name:"Huaqiangbei Night Market",cn:"\u534E\u5F3A\u5317\u591C\u5E02",focus:"Second-hand phones",stars:3,img:"https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u591A\u5C11\u94B1\uFF1F",en:"How much?"},{cn:"\u4FBF\u5B9C\u70B9",en:"Cheaper please"},{cn:"\u7535\u6C60\u5065\u5EB7\u600E\u4E48\u6837\uFF1F",en:"Battery health?"},{cn:"\u53EF\u4EE5\u6D4B\u8BD5\u5417\uFF1F",en:"Can I test?"}],
+food:[{dish:"Dim Sum",where:"Near hotel",price:"\u00A540-70"},{dish:"Food Courts",where:"Inside markets",price:"\u00A530-60"}],budget:{low:"\u00A5105",high:"\u00A5250"}},
+
+foshan:{id:"foshan",name:"Foshan",dates:"Apr 7-10",sub:"Cars & Furniture",color:"#3B9AE1",bg:"#0f1e2e",icon:"\uD83D\uDE97",hotel:"City Comfort Inn, Kuiqi Road",hotelCn:"\u4F5B\u5C71\u7985\u57CE\u533A\u9B41\u5947\u897F\u8DEF\u57CE\u5E02\u4FBF\u6377\u9152\u5E97",focus:"Furniture, Cars, Trucks",note:"Hotel near furniture market",
+markets:[{name:"Foshan Intl Auto City",cn:"\u4F5B\u5C71(\u56FD\u9645)\u8F66\u57CE",focus:"New & used cars",stars:3,img:"https://images.unsplash.com/photo-1549317661-bd32c8ce0afe?w=400&h=200&fit=crop"},{name:"Global Intl Auto City",cn:"\u4F5B\u5C71\u73AF\u7403\u56FD\u9645\u8F66\u57CE",focus:"Used cars, imports",stars:3,img:"https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=200&fit=crop"},{name:"Baofa Used Car City",cn:"\u5B9D\u53D1\u4E8C\u624B\u8F66\u57CE",focus:"Used cars",stars:2,img:"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=200&fit=crop"},{name:"Guangjin Vehicle Market",cn:"\u5E7F\u8FDB\u65E7\u673A\u52A8\u8F66\u4EA4\u6613\u5E02\u573A",focus:"All used vehicles",stars:2,img:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&h=200&fit=crop"},{name:"Lecong Furniture District",cn:"\u4E50\u4ECE\u9547\u5BB6\u5177\u57CE",focus:"Wholesale furniture",stars:3,img:"https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=400&h=200&fit=crop"},{name:"Louvre Furniture Center",cn:"\u7F57\u6D6E\u5BAB\u56FD\u9645\u5BB6\u5177\u535A\u89C8\u4E2D\u5FC3",focus:"High-end, 7 floors",stars:3,img:"https://images.unsplash.com/photo-1618220179428-22790b461013?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u54EA\u4E00\u5E74\u7684\u8F66\uFF1F",en:"Which year?"},{cn:"\u591A\u5C11\u516C\u91CC\uFF1F",en:"How many km?"},{cn:"\u6709\u4E8B\u6545\u5417\uFF1F",en:"Any accidents?"},{cn:"\u6700\u4F4E\u4EF7\u683C\uFF1F",en:"Best price?"},{cn:"\u53EF\u4EE5\u62CD\u7167\u5417\uFF1F",en:"Can I take photos?"}],
+food:[{dish:"Shunde Grilled Fish",where:"Near Kuiqi Road",price:"\u00A580-150"},{dish:"Claypot Rice",where:"Local eateries",price:"\u00A540-70"}],budget:{low:"\u00A51,290",high:"\u00A52,020"}},
+
+yiwu:{id:"yiwu",name:"Yiwu",dates:"Apr 10-15",sub:"Wholesale",color:"#E85D4A",bg:"#2a1512",icon:"\u270F\uFE0F",hotel:"European Style Smart Hotel",hotelCn:"\u4E49\u4E4C\u7A20\u5DDE\u5317\u8DEF\u798F\u7530\u56DB\u533A15\u680B\u6B27\u6D32\u98CE\u60C5\u4E3B\u9898\u667A\u6167\u9152\u5E97",focus:"Stationery, Kids Toys, Materials",note:"5-10 min walk",
+markets:[{name:"District 1 (Toys/Jewelry)",cn:"\u56FD\u9645\u5546\u8D38\u57CE\u4E00\u533A",focus:"Toys, Jewelry, Flowers",stars:3,img:"https://images.unsplash.com/photo-1558060370-d644479cb6f7?w=400&h=200&fit=crop"},{name:"District 2 (Bags/Hardware)",cn:"\u56FD\u9645\u5546\u8D38\u57CE\u4E8C\u533A",focus:"Bags, Hardware, Tools",stars:2,img:"https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=200&fit=crop"},{name:"District 3 (Stationery)",cn:"\u56FD\u9645\u5546\u8D38\u57CE\u4E09\u533A",focus:"Stationery, Office, Sports",stars:3,img:"https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=400&h=200&fit=crop"},{name:"District 4 (Apparel)",cn:"\u56FD\u9645\u5546\u8D38\u57CE\u56DB\u533A",focus:"Apparel, Accessories",stars:2,img:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=200&fit=crop"},{name:"District 5 (Imported)",cn:"\u56FD\u9645\u5546\u8D38\u57CE\u4E94\u533A",focus:"Imported Goods",stars:1,img:"https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u591A\u5C11\u4E2A\u8D77\u6279\uFF1F",en:"Min order qty?"},{cn:"\u6709\u6837\u54C1\u5417\uFF1F",en:"Have samples?"},{cn:"\u6700\u4F4E\u4EF7\u683C\uFF1F",en:"Best price?"},{cn:"\u56FD\u9645\u5546\u8D38\u57CE",en:"Intl Trade City"}],
+food:[{dish:"Duantou Night Market",where:"Huangyuan area",price:"\u00A530-80"},{dish:"Yiwu Halal",where:"Near mosque",price:"\u00A560-120"}],budget:{low:"\u00A51,860",high:"\u00A52,890"}},
+
+guangzhou1:{id:"guangzhou1",name:"GZ Markets",dates:"Apr 15-17",sub:"Auto & Shopping",color:"#5DC77A",bg:"#122218",icon:"\uD83D\uDED2",hotel:"Mido Maison, Science City",hotelCn:"\u5E7F\u5DDE\u79D1\u5B66\u57CE\u4E07\u8FBE\u5E7F\u573A\u7F8E\u5C45\u9152\u5E97",focus:"Cars, Hair, Clothes, Jewellery",note:"Walking distance",
+markets:[{name:"Anhua Chengxin Used Cars",cn:"\u5E7F\u5DDE\u5B89\u9A7F\u8BDA\u65B0\u4E8C\u624B\u8F66\u5E02\u573A",focus:"Used cars",stars:2,img:"https://images.unsplash.com/photo-1549317661-bd32c8ce0afe?w=400&h=200&fit=crop"},{name:"Guangjun Used Cars",cn:"\u5E7F\u5DDE\u5E7F\u99CF\u4E8C\u624B\u8F66\u5E02\u573A",focus:"Used cars",stars:2,img:"https://images.unsplash.com/photo-1580273916550-e323be2ae537?w=400&h=200&fit=crop"},{name:"South China Auto Trade",cn:"\u5E7F\u5DDE\u534E\u5357\u6C7D\u8D38\u5E7F\u573A",focus:"Auto trade",stars:3,img:"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=400&h=200&fit=crop"},{name:"Baolijie Motor Vehicle",cn:"\u5E7F\u5DDE\u5B9D\u5229\u6377\u65E7\u673A\u52A8\u8F66\u5E02\u573A",focus:"Motor vehicles",stars:2,img:"https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=400&h=200&fit=crop"},{name:"Guangwu Auto Trade",cn:"\u5E7F\u7269\u6C7D\u8D38\u4E8C\u624B\u8F66\u5E02\u573A",focus:"Used cars",stars:2,img:"https://images.unsplash.com/photo-1549317661-bd32c8ce0afe?w=400&h=200&fit=crop"},{name:"Beauty Exchange Center",cn:"\u7F8E\u535A\u57CE",focus:"Beauty, hair",stars:2,img:"https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400&h=200&fit=crop"},{name:"European Market",cn:"\u6B27\u6D32\u5E02\u573A",focus:"Imported goods",stars:1,img:"https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=400&h=200&fit=crop"},{name:"New China Building",cn:"\u65B0\u4E2D\u56FD\u5927\u53A6",focus:"Wholesale",stars:1,img:"https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=400&h=200&fit=crop"},{name:"Shein Bales",cn:"Shein\u5C3E\u8D27",focus:"Clothing bales",stars:2,img:"https://images.unsplash.com/photo-1441984904996-e0b6ba687e04?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u6700\u4F4E\u4EF7\u683C\uFF1F",en:"Best price?"},{cn:"\u53EF\u4EE5\u51FA\u53E3\u5417\uFF1F",en:"Can you export?"},{cn:"\u8BF7\u7ED9\u6211\u62A5\u4EF7\u5355",en:"Quotation please"}],
+food:[{dish:"Dim Sum",where:"Wanda Plaza",price:"\u00A560-120"},{dish:"Roast Goose",where:"Cantonese restaurants",price:"\u00A580-150"}],budget:{low:"\u00A5200",high:"\u00A5500"}},
+
+cantonfair1:{id:"cantonfair1",name:"Canton Fair 1",dates:"Apr 18-19",sub:"Phase 1",color:"#D4A843",bg:"#2a2510",icon:"\uD83C\uDFAA",hotel:"Mido Maison",hotelCn:"\u5E7F\u5DDE\u79D1\u5B66\u57CE\u7F8E\u5C45\u9152\u5E97",focus:"Canton Fair (Phase 1)",note:"Factory meetings",isFair:true,defCats:["Vehicles","Motors","Tricycles"],
+markets:[{name:"Vehicles Hall",cn:"\u5E7F\u4EA4\u4F1A\u8F66\u8F86\u9986",focus:"Vehicles",stars:3,img:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop"},{name:"Motors Hall",cn:"\u5E7F\u4EA4\u4F1A\u7535\u673A\u9986",focus:"Motors, machinery",stars:3,img:"https://images.unsplash.com/photo-1565043666747-69f6646db940?w=400&h=200&fit=crop"},{name:"Tricycles Hall",cn:"\u5E7F\u4EA4\u4F1A\u4E09\u8F6E\u8F66\u9986",focus:"Tricycles",stars:2,img:"https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u5E7F\u4EA4\u4F1A\u5728\u54EA\u91CC\uFF1F",en:"Where is Canton Fair?"},{cn:"\u8BF7\u7ED9\u6211\u62A5\u4EF7\u5355",en:"Quotation please"},{cn:"\u6700\u4F4E\u8D77\u8BA2\u91CF\uFF1F",en:"Min order qty?"}],
+food:[{dish:"Fair Food Courts",where:"Inside venue",price:"\u00A550-100"}],budget:{low:"\u00A5300",high:"\u00A5800"}},
+
+xuchang:{id:"xuchang",name:"Xuchang",dates:"Apr 20-22",sub:"Factory Visits",color:"#B07DDB",bg:"#1e1428",icon:"\uD83C\uDFED",hotel:"Mido Maison (base)",hotelCn:"\u8BB8\u660C\u5E02",focus:"Hair Products, Tricycle Factories",note:"Car & driver essential",
+markets:[{name:"Caowei Ancient City",cn:"\u66F9\u9B4F\u53E4\u57CE\u533A",focus:"Hair products",stars:3,img:"https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=200&fit=crop"},{name:"Aboboya Factory",cn:"\u963F\u535A\u535A\u4E9A\u5DE5\u5382",focus:"Tricycle manufacturing",stars:3,img:"https://images.unsplash.com/photo-1565043666747-69f6646db940?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u5DE5\u5382\u5728\u54EA\u91CC\uFF1F",en:"Where is factory?"},{cn:"\u53EF\u4EE5\u53C2\u89C2\u5417\uFF1F",en:"Can I tour?"},{cn:"\u751F\u4EA7\u5468\u671F\u591A\u4E45\uFF1F",en:"Production time?"}],
+food:[{dish:"Henan Cuisine",where:"Local",price:"\u00A540-80"}],budget:{low:"\u00A5500",high:"\u00A51,200"}},
+
+guangzhou2:{id:"guangzhou2",name:"GZ Markets 2",dates:"Apr 23-25",sub:"Jewellery",color:"#5DC77A",bg:"#122218",icon:"\uD83D\uDC8E",hotel:"Mido Maison",hotelCn:"\u5E7F\u5DDE\u79D1\u5B66\u57CE\u7F8E\u5C45\u9152\u5E97",focus:"Jewellery, Leather, Electronics",note:"Walking distance",
+markets:[{name:"Jewellery Market",cn:"\u73E0\u5B9D\u5E02\u573A",focus:"Wholesale jewellery",stars:3,img:"https://images.unsplash.com/photo-1515562141589-67f0d569b6c4?w=400&h=200&fit=crop"},{name:"Qian Se Leather",cn:"\u5343\u8272\u76AE\u9769\u5E02\u573A",focus:"Leather goods",stars:2,img:"https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400&h=200&fit=crop"},{name:"Guangda",cn:"\u5E7F\u5927",focus:"Electronics",stars:2,img:"https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u6700\u4F4E\u4EF7\u683C\uFF1F",en:"Best price?"},{cn:"\u53EF\u4EE5\u51FA\u53E3\u5417\uFF1F",en:"Can export?"}],
+food:[{dish:"Cantonese Dim Sum",where:"Tea houses",price:"\u00A560-120"}],budget:{low:"\u00A5200",high:"\u00A5500"}},
+
+cantonfair2:{id:"cantonfair2",name:"Canton Fair 2",dates:"Apr 26-27",sub:"Phase 2",color:"#D4A843",bg:"#2a2510",icon:"\uD83C\uDFAA",hotel:"Mido Maison",hotelCn:"\u5E7F\u5DDE\u79D1\u5B66\u57CE\u7F8E\u5C45\u9152\u5E97",focus:"Canton Fair (Phase 2)",note:"Apr 23-27",isFair:true,defCats:["Consumer Goods","Gifts & Home","Textiles"],
+markets:[{name:"Canton Fair Phase 2",cn:"\u5E7F\u4EA4\u4F1A\u4E8C\u671F",focus:"Consumer Goods, Gifts",stars:3,img:"https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u8BF7\u7ED9\u6211\u62A5\u4EF7\u5355",en:"Quotation please"},{cn:"\u80FD\u5BC4\u6837\u54C1\u5417\uFF1F",en:"Send samples?"}],
+food:[{dish:"Fair Food Courts",where:"Inside venue",price:"\u00A550-100"}],budget:{low:"\u00A5200",high:"\u00A5600"}},
+
+yomaspa:{id:"yomaspa",name:"Yoma Spa",dates:"Apr 28-29",sub:"R&R",color:"#E091B8",bg:"#2a1522",icon:"\uD83D\uDC86",hotel:"Mido Maison",hotelCn:"\u5E7F\u5DDE\u79D1\u5B66\u57CE\u7F8E\u5C45\u9152\u5E97",focus:"Yoma Spa",note:"Book appointment",
+markets:[{name:"Yoma Spa",cn:"Yoma Spa",focus:"Spa & wellness",stars:3,img:"https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u6211\u9884\u7EA6\u4E86",en:"I have a reservation"}],food:[{dish:"Hotel Dining",where:"Wanda Plaza",price:"\u00A580-150"}],budget:{low:"\u00A5300",high:"\u00A51,000"}},
+
+shenzhen2:{id:"shenzhen2",name:"SZ Tourism",dates:"Apr 29-May 2",sub:"Departure",color:"#E8A838",bg:"#2a2210",icon:"\u2708\uFE0F",hotel:"Pengke Hotel, SZ North Stn",hotelCn:"\u6DF1\u5733\u5317\u7AD9\u68DA\u5BA2\u9152\u5E97",focus:"Tourism & Departure",note:"Ghana Day May 2",
+markets:[{name:"Shenzhen Sightseeing",cn:"\u6DF1\u5733\u89C2\u5149",focus:"Tourism",stars:2,img:"https://images.unsplash.com/photo-1598887142487-3c854d51eabb?w=400&h=200&fit=crop"}],
+phrases:[{cn:"\u673A\u573A\u5728\u54EA\u91CC\uFF1F",en:"Where is airport?"},{cn:"\u8C22\u8C22\u4E2D\u56FD\uFF01",en:"Thank you China!"}],
+food:[{dish:"Final Dim Sum",where:"Shenzhen",price:"\u00A560-120"}],budget:{low:"\u00A5300",high:"\u00A5800"}}
+};
+
+const CO=["shenzhen1","foshan","yiwu","guangzhou1","cantonfair1","xuchang","guangzhou2","cantonfair2","yomaspa","shenzhen2"];
+const K='ct-v5';
+
+// ==================== STATE ====================
+let S,U;
+try{S=JSON.parse(localStorage.getItem(K+'s'))||{}}catch(e){S={}}
+if(!S.user)S={user:null,city:'shenzhen1',sec:'markets'};
+function loadUser(){try{U=JSON.parse(localStorage.getItem(K+'u:'+S.user))||{}}catch(e){U={}}if(!U.chk)U={chk:{},bud:[],notes:{},fairCats:{}}}
+function saveS(){try{localStorage.setItem(K+'s',JSON.stringify(S))}catch(e){}}
+function saveU(){if(!S.user)return;try{localStorage.setItem(K+'u:'+S.user,JSON.stringify(U))}catch(e){}}
+
+// ==================== HELPERS ====================
+const $=s=>document.querySelector(s);
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function copy(t){navigator.clipboard?navigator.clipboard.writeText(t).then(()=>toast('\u2705 Copied: '+t)):fallbackCopy(t)}
+function fallbackCopy(t){const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();try{document.execCommand('copy');toast('\u2705 Copied: '+t)}catch(e){}document.body.removeChild(a)}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+function stars(n){return '\u2605'.repeat(n)+'\u2606'.repeat(3-n)}
+
+function speak(text){
+  if(!window.speechSynthesis)return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);u.lang='zh-CN';u.rate=0.75;u.pitch=1;
+  const v=speechSynthesis.getVoices();const zh=v.find(x=>x.lang.startsWith('zh'));if(zh)u.voice=zh;
+  speechSynthesis.speak(u);
+}
+
+// ==================== LOGIN ====================
+function renderLogin(){
+  $('#app').innerHTML=`
+  <div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px">
+    <div style="width:100%;max-width:380px;text-align:center">
+      <div style="font-size:48px;margin-bottom:16px">\uD83C\uDDE8\uD83C\uDDF3</div>
+      <h1 style="font-size:24px;font-weight:800;background:linear-gradient(135deg,#E8A838,#E85D4A,#3B9AE1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">China Sourcing Trip</h1>
+      <p style="color:var(--t2);font-size:13px;margin-top:6px">April 6 - May 2, 2025</p>
+      <div id="loginMode" style="margin-top:32px;display:flex;gap:4px;background:var(--s1);border-radius:12px;padding:4px;border:1px solid var(--bd)">
+        <button onclick="setLoginMode('login')" id="btnLogin" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;background:var(--s2);color:var(--t1)">Log In</button>
+        <button onclick="setLoginMode('signup')" id="btnSignup" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:600;background:transparent;color:var(--t3)">Sign Up</button>
+      </div>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:10px">
+        <input id="lName" placeholder="Your name" style="width:100%;padding:14px 18px;border-radius:12px;border:1px solid var(--bd);background:var(--s1);color:var(--t1);font-size:15px;outline:none;box-sizing:border-box">
+        <input id="lPin" placeholder="4-digit PIN" type="password" maxlength="4" style="width:100%;padding:14px 18px;border-radius:12px;border:1px solid var(--bd);background:var(--s1);color:var(--t1);font-size:15px;outline:none;box-sizing:border-box;letter-spacing:8px;text-align:center">
+        <div id="lErr" style="color:#E85D4A;font-size:12px;display:none"></div>
+        <button onclick="doLogin()" style="width:100%;padding:16px;border-radius:12px;font-size:15px;font-weight:700;background:linear-gradient(135deg,#E8A838,#E85D4A);color:#000">Log In</button>
+      </div>
+      <p style="color:var(--t3);font-size:11px;margin-top:16px">\uD83D\uDD12 Data stored locally per user</p>
+    </div>
+  </div>`;
+  $('#lPin').onkeydown=e=>{if(e.key==='Enter')doLogin()};
+}
+let loginMode='login';
+window.setLoginMode=m=>{loginMode=m;$('#btnLogin').style.background=m==='login'?'var(--s2)':'transparent';$('#btnLogin').style.color=m==='login'?'var(--t1)':'var(--t3)';$('#btnSignup').style.background=m==='signup'?'var(--s2)':'transparent';$('#btnSignup').style.color=m==='signup'?'var(--t1)':'var(--t3)'};
+window.doLogin=()=>{
+  const n=$('#lName').value.trim().toLowerCase(),p=$('#lPin').value.trim();
+  if(!n||!p){$('#lErr').style.display='block';$('#lErr').textContent='Enter name and PIN';return}
+  const uk=K+'u:'+n,pk=K+'p:'+n;
+  if(loginMode==='signup'){
+    if(localStorage.getItem(pk)){$('#lErr').style.display='block';$('#lErr').textContent='Name taken';return}
+    localStorage.setItem(pk,p);localStorage.setItem(uk,JSON.stringify({chk:{},bud:[],notes:{},fairCats:{}}));
+    S.user=n;saveS();loadUser();render();
+  }else{
+    const sp=localStorage.getItem(pk);
+    if(!sp){$('#lErr').style.display='block';$('#lErr').textContent='Not found. Sign up first';return}
+    if(sp!==p){$('#lErr').style.display='block';$('#lErr').textContent='Wrong PIN';return}
+    S.user=n;saveS();loadUser();render();
+  }
+};
+
+// ==================== MAIN RENDER ====================
+function render(){
+  if(!S.user){renderLogin();return}
+  const c=D[S.city];
+  const tm=c.markets.length,dm=c.markets.filter((_,i)=>U.chk[S.city+'-m-'+i]).length,pct=tm?Math.round(dm/tm*100):0;
+  let h='';
+
+  // Header
+  h+=`<div style="padding:16px 20px 10px;display:flex;justify-content:space-between;align-items:center">
+    <div><h1 style="font-size:18px;font-weight:800;background:linear-gradient(135deg,#E8A838,#E85D4A,#3B9AE1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">\uD83C\uDDE8\uD83C\uDDF3 China Trip</h1>
+    <div style="font-size:11px;color:var(--t2)">Apr 6 - May 2 \u2022 Hi, ${esc(S.user)}!</div></div>
+    <button onclick="logout()" style="padding:6px 14px;border-radius:8px;font-size:11px;font-weight:600;border:1px solid var(--bd);background:var(--s1);color:var(--t3)">Logout</button></div>`;
+
+  // City scroll
+  h+=`<div style="display:flex;gap:6px;padding:8px 16px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch">`;
+  CO.forEach(k=>{const v=D[k],on=S.city===k;
+    h+=`<button onclick="sc('${k}')" style="padding:8px 14px;border-radius:12px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;border:1px solid ${on?v.color:'var(--bd)'};background:${on?v.bg:'var(--s1)'};color:${on?v.color:'var(--t2)'};line-height:1.4;text-align:left"><span style="font-size:14px">${v.icon}</span> ${v.name}<br><span style="font-size:9px;opacity:.6">${v.dates}</span></button>`;
+  });
+  h+=`</div>`;
+
+  // City card
+  h+=`<div style="margin:0 16px 10px;padding:16px 18px;border-radius:14px;border:1px solid ${c.color}20;background:${c.bg}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start"><div>
+      <h2 style="font-size:20px;font-weight:800;color:${c.color}">${c.icon} ${c.name}</h2>
+      <div style="font-size:12px;color:var(--t2);margin-top:2px">${c.dates} \u2022 ${c.sub}</div></div>
+      ${c.note?`<div style="font-size:10px;padding:4px 10px;border-radius:8px;background:${c.color}15;color:${c.color};font-weight:600;max-width:130px;text-align:right">${esc(c.note)}</div>`:''}</div>
+    <div style="margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--bd)">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);font-weight:600">Hotel</div>
+      <div style="font-size:12px;font-weight:500;margin-top:3px">${esc(c.hotel)}</div>
+      <div onclick="copy('${c.hotelCn}')" style="font-family:'Noto Sans SC';font-size:13px;font-weight:600;margin-top:6px;padding:7px 10px;border-radius:8px;background:${c.color}12;color:${c.color};cursor:pointer;display:flex;justify-content:space-between;align-items:center">
+        <span>${c.hotelCn}</span><span style="font-size:9px;font-family:Outfit;opacity:.5">COPY</span></div></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--t2)">\uD83C\uDFAF ${esc(c.focus)}</div></div>`;
+
+  // Fair categories
+  if(c.isFair&&S.sec==='markets'){
+    const cats=U.fairCats[S.city]||c.defCats||[];
+    h+=`<div style="margin:0 16px 12px;padding:14px 16px;border-radius:14px;background:var(--s1);border:1px solid var(--bd)">
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">\uD83C\uDFF7\uFE0F Fair Categories</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">`;
+    cats.forEach((cat,i)=>{
+      h+=`<div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;background:${c.color}15;border:1px solid ${c.color}30;font-size:12px;font-weight:600;color:${c.color}">${esc(cat)}<button onclick="rmCat(${i})" style="font-size:10px;color:${c.color}80;padding:0;line-height:1">\u2715</button></div>`;
+    });
+    if(!cats.length)h+=`<div style="font-size:12px;color:var(--t3)">No categories yet</div>`;
+    h+=`</div><div style="display:flex;gap:6px">
+      <input id="newCat" placeholder="Add category (e.g. Textiles, Kitchenware...)" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none" onkeydown="if(event.key==='Enter')addCat()">
+      <button onclick="addCat()" style="padding:10px 16px;border-radius:8px;font-size:12px;font-weight:700;background:${c.color};color:#000;white-space:nowrap">+ Add</button></div></div>`;
+  }
+
+  // Progress
+  h+=`<div style="margin:0 16px 12px;padding:12px 16px;border-radius:10px;background:var(--s1);border:1px solid var(--bd)">
+    <div style="font-size:11px;color:var(--t2);font-weight:600;display:flex;justify-content:space-between"><span>Venues Visited</span><span>${dm}/${tm} \u2022 ${pct}%</span></div>
+    <div style="height:5px;border-radius:3px;background:var(--bd);margin-top:6px;overflow:hidden"><div style="height:100%;border-radius:3px;width:${pct}%;background:${c.color};transition:width .4s"></div></div></div>`;
+
+  // Section tabs
+  const secs=[{id:'markets',ic:'\uD83C\uDFEA',lb:'Markets'},{id:'phrases',ic:'\uD83D\uDD0A',lb:'Phrases'},{id:'food',ic:'\uD83C\uDF5C',lb:'Food'},{id:'budget',ic:'\uD83D\uDCB0',lb:'Budget'}];
+  h+=`<div style="display:flex;gap:2px;padding:0 16px 12px">`;
+  secs.forEach(s=>{const on=S.sec===s.id;
+    h+=`<button onclick="ss('${s.id}')" style="flex:1;padding:9px 4px;font-size:11px;font-weight:600;text-align:center;border-radius:10px;border:1px solid ${on?c.color+'40':'var(--bd)'};background:${on?'var(--s2)':'var(--s1)'};color:${on?c.color:'var(--t3)'}">${s.ic} ${s.lb}</button>`;
+  });h+=`</div>`;
+
+  // MARKETS
+  if(S.sec==='markets'){
+    h+=`<div style="padding:0 16px;display:flex;flex-direction:column;gap:10px">`;
+    c.markets.forEach((m,i)=>{
+      const ck=S.city+'-m-'+i,chkd=!!U.chk[ck],nk=S.city+'-'+m.cn,cc=(U.notes[nk]||[]).length;
+      h+=`<div style="border-radius:12px;background:var(--s1);border:1px solid var(--bd);overflow:hidden;opacity:${chkd?.6:1}">
+        <div style="height:100px;background:url(${m.img}) center/cover;position:relative">
+          <div style="position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(13,15,18,.9))"></div>
+          <div style="position:absolute;bottom:8px;left:12px;right:12px;display:flex;justify-content:space-between;align-items:flex-end">
+            <div style="font-size:14px;font-weight:700;text-shadow:0 1px 4px rgba(0,0,0,.8)">${esc(m.name)}</div>
+            <span style="color:#E8A838;letter-spacing:2px;font-size:13px">${stars(m.stars)}</span></div></div>
+        <div style="padding:12px 14px">
+          <div onclick="copy('${m.cn}')" style="font-family:'Noto Sans SC';font-size:13px;color:${c.color};cursor:pointer;display:inline-flex;align-items:center;gap:6px">${m.cn} <span style="font-size:10px;opacity:.3">\uD83D\uDCCB</span></div>
+          <div style="font-size:12px;color:var(--t2);margin-top:4px">${esc(m.focus)}</div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button onclick="tc('${ck}')" style="flex:1;padding:8px 0;border-radius:8px;font-size:12px;font-weight:600;border:1px solid ${chkd?'var(--ok)':'var(--bd)'};background:${chkd?'var(--ok)15':'transparent'};color:${chkd?'var(--ok)':'var(--t2)'};display:flex;align-items:center;justify-content:center;gap:4px">${chkd?'\u2713 Visited':'Mark Visited'}</button>
+            <button onclick="openNotes('${nk}')" style="flex:1;padding:8px 0;border-radius:8px;font-size:12px;font-weight:600;border:1px solid ${c.color}40;background:${c.color}10;color:${c.color};display:flex;align-items:center;justify-content:center;gap:4px">\uD83D\uDCDD Contacts${cc>0?' ('+cc+')':''}</button>
+          </div></div></div>`;
+    });h+=`</div>`;
+  }
+
+  // PHRASES
+  if(S.sec==='phrases'){
+    h+=`<div style="padding:0 16px"><div style="padding:10px 14px;border-radius:10px;background:${c.color}10;border:1px solid ${c.color}30;margin-bottom:12px;font-size:12px;color:${c.color};font-weight:500;display:flex;align-items:center;gap:8px"><span style="font-size:16px">\uD83D\uDD0A</span> Tap play to hear pronunciation. Tap text to copy.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">`;
+    c.phrases.forEach((p,i)=>{
+      h+=`<div id="ph${i}" style="padding:14px 16px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);display:flex;align-items:center;gap:12px">
+        <button onclick="playPh(${i},'${p.cn}')" style="width:44px;height:44px;border-radius:50%;flex-shrink:0;border:2px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:18px">\u25B6</button>
+        <div style="flex:1;min-width:0" onclick="copy('${p.cn}')">
+          <div style="font-family:'Noto Sans SC';font-size:19px;font-weight:700;color:var(--t1);cursor:pointer">${p.cn}</div>
+          <div style="font-size:12px;color:var(--t2);margin-top:2px">${esc(p.en)}</div></div>
+        <button onclick="copy('${p.cn}')" style="padding:6px 10px;border-radius:6px;font-size:10px;font-weight:600;border:1px solid var(--bd);color:var(--t3);flex-shrink:0">COPY</button></div>`;
+    });h+=`</div></div>`;
+  }
+
+  // FOOD
+  if(S.sec==='food'){
+    h+=`<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">`;
+    c.food.forEach(f=>{
+      h+=`<div style="padding:14px 16px;border-radius:10px;background:var(--s1);border:1px solid var(--bd)">
+        <div style="font-size:14px;font-weight:600">${esc(f.dish)}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:4px">\uD83D\uDCCD ${esc(f.where)}</div>
+        ${f.price?`<div style="font-family:'JetBrains Mono';font-size:11px;color:var(--t3);margin-top:4px">${f.price}</div>`:''}</div>`;
+    });h+=`</div>`;
+  }
+
+  // BUDGET
+  if(S.sec==='budget'){
+    const be=U.bud.filter(e=>e.city===S.city),ts=be.reduce((s,e)=>s+e.amt,0);
+    h+=`<div style="padding:0 16px">
+      <div style="padding:18px;border-radius:14px;background:var(--s1);border:1px solid var(--bd);margin-bottom:12px">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);font-weight:600">Total Spent - ${c.name}</div>
+        <div style="font-family:'JetBrains Mono';font-size:30px;font-weight:700;color:${c.color};margin-top:4px">\u00A5${ts.toLocaleString()}</div>
+        <div style="font-size:12px;color:var(--t2);margin-top:6px">Est: <span style="font-family:'JetBrains Mono'">${c.budget.low} - ${c.budget.high}</span></div></div>`;
+    if(be.length){h+=`<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px">`;
+      be.forEach(e=>{const gi=U.bud.indexOf(e);
+        h+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:10px;background:var(--s1);border:1px solid var(--bd);font-size:13px">
+          <div><div style="font-weight:500">${esc(e.cat)}</div>${e.note?`<div style="font-size:10px;color:var(--t3);margin-top:2px">${esc(e.note)}</div>`:''}</div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="font-family:'JetBrains Mono';font-weight:600;color:${c.color}">\u00A5${e.amt.toLocaleString()}</span>
+          <button onclick="db(${gi})" style="font-size:12px;color:var(--t3);padding:2px">\u2715</button></div></div>`;
+      });h+=`</div>`}
+    h+=`<div style="padding:14px;border-radius:14px;background:var(--s1);border:1px solid var(--bd)">
+      <div style="font-size:12px;font-weight:700;margin-bottom:10px">\u2795 Add Expense</div>
+      <div style="display:flex;gap:6px;margin-bottom:6px">
+        <select id="bc" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none;-webkit-appearance:none"><option>Food</option><option>Transport</option><option>Shopping</option><option>Hotel</option><option>Samples</option><option>Other</option></select>
+        <input id="ba" type="number" placeholder="\u00A5 Amt" style="flex:1;padding:10px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none"></div>
+      <input id="bn" placeholder="Note (optional)" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box">
+      <button onclick="ab()" style="width:100%;padding:12px;border-radius:8px;font-size:13px;font-weight:700;background:${c.color};color:#000">Add Expense</button></div></div>`;
+  }
+
+  // Bottom nav
+  h+=`<div class="bnav"><div class="bnav-in">`;
+  secs.forEach(n=>{h+=`<button class="nbtn" style="${S.sec===n.id?'color:'+c.color:''}" onclick="ss('${n.id}')"><span class="ni">${n.ic}</span>${n.lb}</button>`});
+  h+=`</div></div>`;
+
+  $('#app').innerHTML=h;saveS();
+}
+
+// ==================== NOTES MODAL ====================
+let curNK=null;
+window.openNotes=nk=>{curNK=nk;renderNotes()};
+function renderNotes(){
+  if(!curNK)return;
+  const c=D[S.city],notes=U.notes[curNK]||[];
+  let h=`<div class="overlay" onclick="if(event.target===this)closeNotes()"><div class="panel">
+    <div class="panel-hdr"><div style="font-size:15px;font-weight:700">\uD83D\uDCDD Contacts & Cards</div>
+    <button onclick="closeNotes()" style="font-size:20px;color:var(--t3)">\u2715</button></div><div class="panel-body">`;
+  if(!notes.length)h+=`<div style="text-align:center;padding:24px;color:var(--t3);font-size:13px">No contacts yet. Add people you meet below.</div>`;
+  notes.forEach((e,i)=>{
+    h+=`<div style="padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-size:14px;font-weight:600">${esc(e.name)}</div>
+      <button onclick="rmNote(${i})" style="font-size:11px;color:var(--t3)">\u2715</button></div>
+      ${e.phone?`<div style="font-size:12px;color:var(--t2);margin-top:4px">\uD83D\uDCDE ${esc(e.phone)}</div>`:''}
+      ${e.wechat?`<div style="font-size:12px;color:${c.color};margin-top:2px">\uD83D\uDCAC ${esc(e.wechat)}</div>`:''}
+      ${e.note?`<div style="font-size:11px;color:var(--t2);margin-top:4px;font-style:italic">${esc(e.note)}</div>`:''}
+      ${e.card?`<div style="margin-top:8px"><img src="${e.card}" onclick="viewCard('${e.card.substring(0,50)}')" style="width:100%;height:80px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid var(--bd)"><div style="font-size:10px;color:var(--t3);margin-top:3px;text-align:center">Tap to enlarge</div></div>`:''}</div>`;
+  });
+
+  h+=`<div style="padding:14px;border-radius:12px;background:var(--s1);border:1px solid var(--bd);margin-top:4px">
+    <div style="font-size:13px;font-weight:700;margin-bottom:10px">\u2795 Add Contact</div>
+    <input id="nName" placeholder="Name *" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none;margin-bottom:6px;box-sizing:border-box">
+    <div style="display:flex;gap:6px;margin-bottom:6px">
+      <input id="nPhone" placeholder="Phone" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none">
+      <input id="nWechat" placeholder="WeChat ID" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none"></div>
+    <input id="nNote" placeholder="Notes (products, prices, MOQs...)" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--t1);font-size:13px;outline:none;margin-bottom:8px;box-sizing:border-box">
+    <input id="nFile" type="file" accept="image/*" capture="environment" style="display:none" onchange="previewCard(this)">
+    <button onclick="document.getElementById('nFile').click()" id="cardBtn" style="width:100%;padding:10px 0;border-radius:8px;font-size:12px;font-weight:600;border:1px dashed var(--bd);color:var(--t3);margin-bottom:8px;display:flex;align-items:center;justify-content:center;gap:6px">\uD83D\uDCF7 Upload Business Card</button>
+    <div id="cardPreview" style="display:none;margin-bottom:8px"><img id="cardImg" style="width:100%;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--bd)"></div>
+    <button onclick="addNote()" style="width:100%;padding:12px;border-radius:8px;font-size:13px;font-weight:700;background:${c.color};color:#000">Add Contact</button></div>`;
+
+  h+=`</div></div></div>`;
+  let el=document.getElementById('notesOverlay');
+  if(!el){el=document.createElement('div');el.id='notesOverlay';document.body.appendChild(el)}
+  el.innerHTML=h;
+}
+
+let pendingCard=null;
+window.previewCard=input=>{
+  const f=input.files?.[0];if(!f)return;
+  const r=new FileReader();r.onload=e=>{
+    pendingCard=e.target.result;
+    const p=document.getElementById('cardPreview'),img=document.getElementById('cardImg'),btn=document.getElementById('cardBtn');
+    if(p)p.style.display='block';if(img)img.src=pendingCard;
+    if(btn){btn.innerHTML='\u2705 Card attached - tap to change';btn.style.borderColor=D[S.city].color;btn.style.color=D[S.city].color}
+  };r.readAsDataURL(f);
+};
+window.addNote=()=>{
+  const n=$('#nName')?.value?.trim();if(!n)return;
+  if(!U.notes[curNK])U.notes[curNK]=[];
+  U.notes[curNK].push({name:n,phone:$('#nPhone')?.value||'',wechat:$('#nWechat')?.value||'',note:$('#nNote')?.value||'',card:pendingCard,ts:Date.now()});
+  pendingCard=null;saveU();renderNotes();render();
+};
+window.rmNote=i=>{if(!U.notes[curNK])return;U.notes[curNK].splice(i,1);saveU();renderNotes();render()};
+window.closeNotes=()=>{curNK=null;pendingCard=null;const el=document.getElementById('notesOverlay');if(el)el.innerHTML=''};
+window.viewCard=()=>{/* handled inline */};
+
+// ==================== ACTIONS ====================
+window.sc=k=>{S.city=k;S.sec='markets';render();window.scrollTo(0,0)};
+window.ss=s=>{S.sec=s;render()};
+window.tc=k=>{U.chk[k]=!U.chk[k];saveU();render()};
+window.logout=()=>{S.user=null;saveS();render()};
+window.ab=()=>{const a=parseFloat($('#ba')?.value);if(!a||a<=0){toast('Enter valid amount');return}U.bud.push({city:S.city,cat:$('#bc').value,amt:a,note:$('#bn')?.value||'',ts:Date.now()});saveU();render();toast('Added \u00A5'+a)};
+window.db=i=>{U.bud.splice(i,1);saveU();render()};
+window.addCat=()=>{const v=$('#newCat')?.value?.trim();if(!v)return;if(!U.fairCats[S.city])U.fairCats[S.city]=[...(D[S.city].defCats||[])];U.fairCats[S.city].push(v);saveU();render()};
+window.rmCat=i=>{if(!U.fairCats[S.city])U.fairCats[S.city]=[...(D[S.city].defCats||[])];U.fairCats[S.city].splice(i,1);saveU();render()};
+
+window.playPh=(i,text)=>{
+  speak(text);
+  const el=document.getElementById('ph'+i);if(!el)return;
+  const c=D[S.city].color;
+  const btn=el.querySelector('button');if(btn){btn.style.borderColor=c;btn.style.background=c+'20';btn.style.animation='pulse 1s ease infinite';btn.innerHTML='\uD83D\uDD0A'}
+  const cn=el.querySelector('[style*="Noto Sans SC"]');if(cn)cn.style.color=c;
+  el.style.borderColor=c+'60';
+  const dur=Math.max(1500,text.length*400);
+  setTimeout(()=>{if(btn){btn.style.borderColor='var(--bd)';btn.style.background='transparent';btn.style.animation='none';btn.innerHTML='\u25B6'}if(cn)cn.style.color='var(--t1)';el.style.borderColor='var(--bd)'},dur);
+};
+
+window.copy=copy;
+
+// ==================== INIT ====================
+if(S.user)loadUser();
+speechSynthesis?.getVoices();
+render();
+</script>
+</body>
+</html>
